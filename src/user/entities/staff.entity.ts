@@ -1,8 +1,16 @@
-import { ChildEntity, Column } from 'typeorm';
+import { Entity, OneToOne, PrimaryColumn, Column, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 
-@ChildEntity('staff')
-export class Staff extends User {
+@Entity('staff')
+export class Staff {
+  @PrimaryColumn('uuid')
+  id: string; 
+
+  @OneToOne(() => User, (user) => user.staff)
+  @JoinColumn({ name: 'id' })
+  user: User;
+
+  // Staff-specific fields
   @Column()
   a2pEmpId: string;
 
@@ -14,5 +22,4 @@ export class Staff extends User {
 
   @Column()
   natureOfWork: string;
-
 }

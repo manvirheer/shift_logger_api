@@ -1,4 +1,3 @@
-// src/user/user.controller.ts
 import {
     Controller,
     Post,
@@ -13,14 +12,15 @@ import {
     ClassSerializerInterceptor,
   } from '@nestjs/common';
   import { UserService } from './user.service';
-  import { CreateAdminDto } from './dtos/create-admin.dto';
-  import { CreateStaffDto } from './dtos/create-staff.dto';
-  import { UpdateUserDto } from './dtos/update-user.dto';
-  import { LoginDto } from './dtos/login.dto';
+  import { CreateAdminDto } from './dto/create-admin.dto';
+  import { CreateStaffDto } from './dto/create-staff.dto';
+  import { UpdateUserDto } from './dto/update-user.dto';
+  import { LoginDto } from './dto/login.dto';
   import { AuthGuard } from '@nestjs/passport';
   import { JwtService } from '@nestjs/jwt';
   import { RolesGuard } from './guards/roles.guard';
   import { Roles } from './decorators/roles.decorator';
+  import { UserRole } from './entities/user.entity';
   
   @UseInterceptors(ClassSerializerInterceptor)
   @Controller('auth')
@@ -32,21 +32,21 @@ import {
   
     @Post('register-admin')
     async registerAdmin(@Body() createAdminDto: CreateAdminDto) {
-      const admin = await this.userService.createAdmin(createAdminDto);
-      return admin;
+      const user = await this.userService.createAdmin(createAdminDto);
+      return user;
     }
   
     @Post('register-staff')
     async registerStaff(@Body() createStaffDto: CreateStaffDto) {
-      const staff = await this.userService.createStaff(createStaffDto);
-      return staff;
+      const user = await this.userService.createStaff(createStaffDto);
+      return user;
     }
   
     @UseGuards(AuthGuard('local'))
     @Post('login')
     async login(@Request() req) {
       const user = req.user;
-      const payload = { sub: user.id, email: user.email, type: user.type };
+      const payload = { sub: user.id, email: user.email, role: user.role };
       return {
         access_token: this.jwtService.sign(payload),
       };
@@ -66,7 +66,6 @@ import {
       @Body() updateUserDto: UpdateUserDto,
       @Request() req,
     ) {
-      // Optionally check if req.user.id === id or if user is an Admin
       const user = await this.userService.updateUser(id, updateUserDto);
       return user;
     }
@@ -74,33 +73,21 @@ import {
     @UseGuards(AuthGuard('jwt'))
     @Delete(':id')
     async deleteUser(@Param('id') id: string, @Request() req) {
-      // Optionally check permissions
       await this.userService.removeUser(id);
       return { message: 'User deleted successfully' };
     }
   
-    // Example of a protected route accessible only by Admins
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles('Admin')
+    @Roles(UserRole.ADMIN)
     @Get('admin-data')
     getAdminData() {
       return { message: 'This data is only accessible by Admin users' };
     }
   
-    // Example of a protected route accessible by Staff
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles('Staff')
+    @Roles(UserRole.STAFF)
     @Get('staff-data')
     getStaffData() {
       return { message: 'This data is accessible by Staff users' };
     }
-
-
-    // get list of all users
-    @Get('users')
-    async getAllUsers() {
-      const users = await this.userService.findAll();
-      return users;
-    }
   }
-  

@@ -2,15 +2,22 @@ import {
     Entity,
     PrimaryGeneratedColumn,
     Column,
-    TableInheritance,
     BeforeInsert,
+    OneToOne,
+    JoinColumn,
   } from 'typeorm';
   import * as bcrypt from 'bcrypt';
   import { Exclude } from 'class-transformer';
+  import { Admin } from './admin.entity';
+  import { Staff } from './staff.entity';
+  
+  export enum UserRole {
+    ADMIN = 'Admin',
+    STAFF = 'Staff',
+  }
   
   @Entity('users')
-  @TableInheritance({ column: { type: 'varchar', name: 'type' } })
-  export abstract class User {
+  export class User {
     @PrimaryGeneratedColumn('uuid')
     id: string;
   
@@ -33,12 +40,20 @@ import {
     @Exclude()
     password: string;
   
-    @Column()
-    type: string; // Discriminator column
+    @Column({
+      type: 'enum',
+      enum: UserRole,
+    })
+    role: UserRole;
+  
+    @OneToOne(() => Admin, (admin) => admin.user, { cascade: true, eager: true })
+    admin?: Admin;
+  
+    @OneToOne(() => Staff, (staff) => staff.user, { cascade: true, eager: true })
+    staff?: Staff;
   
     @BeforeInsert()
     async hashPassword() {
       this.password = await bcrypt.hash(this.password, 10);
     }
   }
-  

@@ -20,6 +20,7 @@ export class CreateStaffDto {
   @IsNotEmpty()
   password: string;
 
+  // Staff-specific fields
   @IsString()
   a2pEmpId: string;
 
