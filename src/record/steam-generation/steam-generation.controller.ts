@@ -9,21 +9,18 @@ import {
     UsePipes,
     ValidationPipe,
   } from '@nestjs/common';
-  import { SteamGenerationRecordService } from './steam_generation.service';
-  import { CreateSteamGenerationDto } from './dtos/create_steam_generation.dto';    
-  import { UpdateSteamGenerationDto } from './dtos/update_steam_generation.dto';
+  import { SteamGenerationService } from './steam-generation.service';
+  import { CreateSteamGenerationDto } from './dtos/create-steam-generation.dto';
+  import { UpdateSteamGenerationDto } from './dtos/update-steam-generation.dto';
   
-  @Controller('records/steam_generation')
-  export class SteamGenerationRecordController {
-    constructor(
-      private readonly steamGenService: SteamGenerationRecordService,
-    ) {}
+  @Controller('record/steam-generation')
+  export class SteamGenerationController {
+    constructor(private readonly steamGenService: SteamGenerationService) {}
   
     @Post()
     @UsePipes(new ValidationPipe({ whitelist: true }))
     async create(@Body() createDto: CreateSteamGenerationDto) {
-      const record = await this.steamGenService.create(createDto);
-      return record;
+      return this.steamGenService.create(createDto);
     }
   
     @Get()
@@ -51,3 +48,4 @@ import {
       return { message: 'Record deleted successfully' };
     }
   }
+  

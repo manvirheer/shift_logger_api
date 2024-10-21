@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { SteamGenerationRecordService } from './steam_generation.service';
+import { SteamGenerationService } from './steam-generation.service';
 
 describe('SteamGenerationService', () => {
-  let service: SteamGenerationRecordService;
+  let service: SteamGenerationService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SteamGenerationRecordService],
+      providers: [SteamGenerationService],
     }).compile();
 
-    service = module.get<SteamGenerationRecordService>(SteamGenerationRecordService);
+    service = module.get<SteamGenerationService>(SteamGenerationService);
   });
 
   it('should be defined', () => {

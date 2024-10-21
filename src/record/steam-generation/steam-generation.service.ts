@@ -1,23 +1,25 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SteamGenerationRecord } from './entities/steam_generation_record.entity';
-import { CreateSteamGenerationDto } from './dtos/create_steam_generation.dto';
-import { UpdateSteamGenerationDto } from './dtos/update_steam_generation.dto';
+import { SteamGenerationRecord } from './entities/steam-generation-record.entity';
+import { CreateSteamGenerationDto } from './dtos/create-steam-generation.dto';
+import { UpdateSteamGenerationDto } from './dtos/update-steam-generation.dto';
 
 @Injectable()
-export class SteamGenerationRecordService {
+export class SteamGenerationService {
   constructor(
     @InjectRepository(SteamGenerationRecord)
     private readonly steamGenRepo: Repository<SteamGenerationRecord>,
   ) {}
 
-  async create(data: CreateSteamGenerationDto): Promise<SteamGenerationRecord> {
-    const record = this.steamGenRepo.create({
+  async create(
+    data: CreateSteamGenerationDto,
+  ): Promise<SteamGenerationRecord> {
+    const steamGenRecord = this.steamGenRepo.create({
       ...data,
-      type: 'SteamGenerationRecord', // Discriminator column value
     });
-    return this.steamGenRepo.save(record);
+
+    return this.steamGenRepo.save(steamGenRecord);
   }
 
   async findAll(): Promise<SteamGenerationRecord[]> {
@@ -36,8 +38,15 @@ export class SteamGenerationRecordService {
     id: string,
     updateData: UpdateSteamGenerationDto,
   ): Promise<SteamGenerationRecord> {
-    await this.steamGenRepo.update(id, updateData);
-    return this.findOne(id);
+    const steamGenRecord = await this.steamGenRepo.findOne({ where: { id } });
+    if (!steamGenRecord) {
+      throw new NotFoundException(`Record with ID ${id} not found`);
+    }
+
+    Object.assign(steamGenRecord, updateData);
+
+    await this.steamGenRepo.save(steamGenRecord);
+    return steamGenRecord;
   }
 
   async remove(id: string): Promise<void> {
