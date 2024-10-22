@@ -20,6 +20,13 @@ export class UserService {
     private readonly staffRepo: Repository<Staff>,
   ) {}
 
+  // find all staff
+  async findAllStaff(): Promise<User[]> {
+    return this.userRepo.find({
+      where: { role: UserRole.STAFF },
+    });
+  }
+
   async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
     // Create the user
     const user = this.userRepo.create({
