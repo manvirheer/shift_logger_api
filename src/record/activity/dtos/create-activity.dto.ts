@@ -19,4 +19,6 @@ export class CreateActivityDto {
 
   @IsString()
   activityDetails: string;
+
+  
 }

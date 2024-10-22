@@ -7,11 +7,11 @@ export class CreateSteamGenerationDto {
 
   @IsOptional()
   @IsString()
-  plantId?: string; // Placeholder
+  plantId?: string; 
 
   @IsOptional()
   @IsString()
-  shiftId?: string; // Placeholder
+  shiftId?: string;
 
   @IsNumber()
   initialReading: number;

@@ -1,34 +1,80 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+} from '@nestjs/common';
 import { PlantService } from './plant.service';
-import { CreatePlantDto } from './dto/create-plant.dto';
-import { UpdatePlantDto } from './dto/update-plant.dto';
+import { CreatePlantDto } from './dtos/create-plant.dto';
+import { UpdatePlantDto } from './dtos/update-plant.dto';
+import { UsersIdsDto } from './dtos/users-ids.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../user/guards/roles.guard';
+import { Roles } from '../user/decorators/roles.decorator';
+import { UserRole } from '../user/entities/user.entity';
 
-@Controller('plant')
+@UseInterceptors(ClassSerializerInterceptor)
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Controller('plants')
 export class PlantController {
   constructor(private readonly plantService: PlantService) {}
 
+  @Roles(UserRole.ADMIN)
   @Post()
-  create(@Body() createPlantDto: CreatePlantDto) {
-    return this.plantService.create(createPlantDto);
+  async createPlant(@Body() createPlantDto: CreatePlantDto) {
+    const plant = await this.plantService.createPlant(createPlantDto);
+    return plant;
   }
 
   @Get()
-  findAll() {
-    return this.plantService.findAll();
+  async getAllPlants() {
+    const plants = await this.plantService.findAllPlants();
+    return plants;
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.plantService.findOne(+id);
+  @Get(':plantId')
+  async getPlantById(@Param('plantId') plantId: string) {
+    const plant = await this.plantService.findPlantById(plantId); 
+    return plant;
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePlantDto: UpdatePlantDto) {
-    return this.plantService.update(+id, updatePlantDto);
+  @Roles(UserRole.ADMIN)
+  @Patch(':plantId')  
+  async updatePlant(
+    @Param('plantId') plantId: string, 
+    @Body() updatePlantDto: UpdatePlantDto,
+  ) {
+    return this.plantService.updatePlant(plantId, updatePlantDto);  
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.plantService.remove(+id);
+  @Roles(UserRole.ADMIN)
+  @Delete(':plantId')  
+  async deletePlant(@Param('plantId') plantId: string) {
+    await this.plantService.removePlant(plantId); 
+    return { message: 'Plant deleted successfully' };
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Post(':plantId/users')  
+  async addUsersToPlant(
+    @Param('plantId') plantId: string,  
+    @Body() addUsersToPlantDto: UsersIdsDto,
+  ) {
+    return this.plantService.addUsersToPlant(plantId, addUsersToPlantDto.userIds); 
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Delete(':plantId/users')  
+  async removeUsersFromPlant(
+    @Param('plantId') plantId: string, 
+    @Body() removeUsersDto: UsersIdsDto,
+  ) {
+    return this.plantService.removeUsersFromPlant(plantId, removeUsersDto.userIds); 
   }
 }

@@ -15,7 +15,6 @@ import {
   import { CreateAdminDto } from './dto/create-admin.dto';
   import { CreateStaffDto } from './dto/create-staff.dto';
   import { UpdateUserDto } from './dto/update-user.dto';
-  import { LoginDto } from './dto/login.dto';
   import { AuthGuard } from '@nestjs/passport';
   import { JwtService } from '@nestjs/jwt';
   import { RolesGuard } from './guards/roles.guard';
@@ -29,7 +28,15 @@ import {
       private readonly userService: UserService,
       private readonly jwtService: JwtService,
     ) {}
-  
+    
+    // Get All Staff
+    @Get('staff')
+    async getAllStaff() {
+      const staff = await this.userService.findAllStaff();
+      return staff;
+    }
+
+
     @Post('register-admin')
     async registerAdmin(@Body() createAdminDto: CreateAdminDto) {
       const user = await this.userService.createAdmin(createAdminDto);
