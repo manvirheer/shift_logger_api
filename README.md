@@ -1,6 +1,6 @@
 # Shift Logger API
 
-Welcome to the **Shift Logger API** project! This API is designed to manage users, plants, and steam generation records in an industrial setting. It provides robust authentication and authorization mechanisms, role-based access control, and comprehensive data management features.
+Welcome to the **Shift Logger API** project! This API is designed to manage users, plants, and steam generation records in an industrial setting. It provides authentication and authorization mechanisms, role-based access control, and comprehensive data management features.
 
 ## Table of Contents
 
@@ -18,10 +18,6 @@ Welcome to the **Shift Logger API** project! This API is designed to manage user
   - [Steam Generation Record Module](#steam-generation-record-module)
 - [Authentication and Authorization](#authentication-and-authorization)
 - [Error Handling](#error-handling)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [License](#license)
-
 ---
 
 ## Project Overview
@@ -65,7 +61,7 @@ The API uses JWT authentication, and all endpoints are secured to ensure that on
 
 - **Node.js** (version 14 or higher)
 - **npm** (Node Package Manager)
-- **MySQL** database
+- **MySQL** database (MySQL2 preferred for authentication module support)
 
 ### Steps
 
@@ -100,12 +96,7 @@ DATABASE_NAME=nest_app_db
 
 # JWT Secret
 JWT_SECRET=your_jwt_secret
-
-# Other Environment Variables
-# Add any other environment variables as needed
 ```
-
-**Note**: Replace `your_database_user`, `your_database_password`, and `your_jwt_secret` with your actual database credentials and a secure secret key for JWT.
 
 ---
 
@@ -135,7 +126,6 @@ Ensure you have MySQL installed and running on your local machine.
      FLUSH PRIVILEGES;
      ```
 
-   - **Note**: Replace `your_database_user` and `your_database_password` with the credentials specified in your `.env` file.
 
 2. **Run Database Migrations (If Applicable)**
 
@@ -145,16 +135,14 @@ Ensure you have MySQL installed and running on your local machine.
    npm run typeorm migration:run
    ```
 
-   If you're using `synchronize: true` in your TypeORM configuration, the database schema will be auto-generated based on your entities. **Note**: Using `synchronize: true` is not recommended for production environments.
-
 ---
 
 ## Running the Application
 
-Start the NestJS application using the following command:
+Start the NestJS application in dev environment using the following command:
 
 ```bash
-npm run start
+npm run start:dev
 ```
 
 The API should now be running at `http://localhost:3000` (or the port specified in your configuration).
@@ -236,53 +224,4 @@ The API uses NestJS's built-in exception filters to provide consistent error res
 - **Authorization Errors**: Occur when a user tries to access a resource they do not have permission for.
 - **Not Found Errors**: Occur when a requested resource does not exist.
 
----
 
-## Testing
-
-- **Unit Tests**: You can write unit tests for individual components using Jest.
-- **Integration Tests**: Test the API endpoints using tools like Postman or automated test scripts.
-- **Running Tests**:
-
-  ```bash
-  npm run test
-  ```
-
----
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. **Fork the Repository**
-2. **Create a Feature Branch**
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-3. **Commit Your Changes**
-   ```bash
-   git commit -m "Add your message here"
-   ```
-4. **Push to the Branch**
-   ```bash
-   git push origin feature/YourFeature
-   ```
-5. **Open a Pull Request**
-
----
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
----
-
-## Contact
-
-For any questions or support, please contact [Your Name] at [your.email@example.com].
-
----
-
-**Note**: This README provides an overview of the Shift Logger API project, focusing on the modules and their interconnections, as well as instructions for setting up the database and environment variables locally. Remember to replace placeholders like `<repository-url>`, `Your Name`, and `[your.email@example.com]` with actual information relevant to your project.
-
----
