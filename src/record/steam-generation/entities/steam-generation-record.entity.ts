@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { Plant } from '../../../plant/entities/plant.entity';
 import { User } from '../../../user/entities/user.entity';
+import { ShiftSchedule } from '../../../shift/shift-schedule/entities/shift-schedule.entity';
 
 @Entity('steam_generation_records')
 export class SteamGenerationRecord {
@@ -36,13 +37,14 @@ export class SteamGenerationRecord {
   updatedAt: Date;
 
   // Relation to Plant
-  @ManyToOne(() => Plant, { nullable: false })
+  @ManyToOne(() => Plant, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'plant_id' })
   plant: Plant;
 
-  // Shift ID
-  @Column({ nullable: true })
-  shiftId: string;
+  // Corrected relation to ShiftSchedule
+  @ManyToOne(() => ShiftSchedule, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'shift_schedule_id' })
+  shiftSchedule: ShiftSchedule;
 
   // Readings and calculations
   @Column({ type: 'float' })

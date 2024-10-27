@@ -225,3 +225,4 @@ The API uses NestJS's built-in exception filters to provide consistent error res
 - **Not Found Errors**: Occur when a requested resource does not exist.
 
 
+m 

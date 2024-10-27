@@ -4,9 +4,10 @@ import { User } from './user.entity';
 @Entity('staff')
 export class Staff {
   @PrimaryColumn('uuid')
-  id: string; 
+  id: string;
 
-  @OneToOne(() => User, (user) => user.staff)
+  // Cascade on delete
+  @OneToOne(() => User, (user) => user.staff, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id' })
   user: User;
 

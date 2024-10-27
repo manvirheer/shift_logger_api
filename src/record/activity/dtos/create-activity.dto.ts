@@ -1,24 +1,18 @@
 import { IsOptional, IsString } from 'class-validator';
 
 export class CreateActivityDto {
-  @IsOptional()
+  
   @IsString()
-  createdBy?: string;
+  plantId: string;  // The client will still send this
 
   @IsOptional()
   @IsString()
-  updatedBy?: string;
-
-  @IsOptional()
-  @IsString()
-  shiftId?: string; // Placeholder
-
-  @IsOptional()
-  @IsString()
-  plantId?: string; // Placeholder
+  shiftId?: string;
 
   @IsString()
   activityDetails: string;
 
-  
+  @IsOptional()
+  @IsString()
+  remarks?: string;
 }

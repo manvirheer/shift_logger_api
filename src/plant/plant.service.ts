@@ -21,7 +21,8 @@ export class PlantService {
   }
 
   async findAllPlants(): Promise<Plant[]> {
-    return this.plantRepo.find({ relations: ['users'] });
+    // Find all plants and return only the id and name without any relations
+    return this.plantRepo.find({ select: ['plantId', 'plantName'] });
   }
 
   async findPlantById(plantId: string): Promise<Plant> {
@@ -90,6 +91,12 @@ export class PlantService {
   ): Promise<Plant> {
     const plant = await this.findPlantById(plantId);
     plant.users = plant.users.filter((user) => !userIds.includes(user.id));
+    return this.plantRepo.save(plant);
+  }
+
+  async removeAllUsersFromPlant(plantId: string): Promise<Plant> {
+    const plant = await this.findPlantById(plantId);
+    plant.users = [];
     return this.plantRepo.save(plant);
   }
 }

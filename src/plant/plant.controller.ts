@@ -56,6 +56,8 @@ export class PlantController {
   @Roles(UserRole.ADMIN)
   @Delete(':plantId')  
   async deletePlant(@Param('plantId') plantId: string) {
+    // remove all users from the plant to remove foreign key constraint
+    await this.plantService.removeAllUsersFromPlant(plantId);
     await this.plantService.removePlant(plantId); 
     return { message: 'Plant deleted successfully' };
   }
@@ -76,5 +78,12 @@ export class PlantController {
     @Body() removeUsersDto: UsersIdsDto,
   ) {
     return this.plantService.removeUsersFromPlant(plantId, removeUsersDto.userIds); 
+  }
+
+  // remove all users from plant
+  @Roles(UserRole.ADMIN)
+  @Delete(':plantId/users/all')
+  async removeAllUsersFromPlant(@Param('plantId') plantId: string) {
+    return this.plantService.removeAllUsersFromPlant(plantId);
   }
 }

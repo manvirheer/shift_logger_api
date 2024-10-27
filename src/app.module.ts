@@ -4,6 +4,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { RecordModule } from './record/record.module';
 import { UserModule } from './user/user.module';
 import { PlantModule } from './plant/plant.module';
+import { ShiftModule } from './shift/shift.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PlantModule } from './plant/plant.module';
     RecordModule,
     UserModule,
     PlantModule,
+    ShiftModule
 
   ],
 })

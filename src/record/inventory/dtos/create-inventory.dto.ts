@@ -1,19 +1,17 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class UpdateSteamGenerationDto {
+export class CreateInventoryDto {
   @IsOptional()
   @IsString()
   shiftId?: string;
 
-  @IsOptional()
   @IsNumber()
-  initialReading?: number;
-
-  @IsOptional()
-  @IsNumber()
-  finalReading?: number;
+  shiftReading: number;
 
   @IsOptional()
   @IsString()
-  remarks?: string;
+  details?: string;
+
+  @IsString()
+  plantId: string; 
 }

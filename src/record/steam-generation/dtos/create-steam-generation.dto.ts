@@ -1,27 +1,17 @@
-import { IsUUID, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateSteamGenerationDto {
-  @IsOptional()
   @IsString()
-  createdBy?: string;
+  plantId: string;  
 
-  @IsOptional()
   @IsString()
-  plantId?: string; 
-
-  @IsOptional()
-  @IsString()
-  shiftId?: string;
+  shiftId: string; // Made required
 
   @IsNumber()
   initialReading: number;
 
   @IsNumber()
   finalReading: number;
-
-  @IsOptional()
-  @IsString()
-  updatedBy?: string;
 
   @IsOptional()
   @IsString()

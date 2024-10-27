@@ -4,7 +4,6 @@ import {
   Column,
   BeforeInsert,
   OneToOne,
-  JoinColumn,
   ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
@@ -56,7 +55,9 @@ export class User {
   @OneToOne(() => Staff, (staff) => staff.user, { cascade: true, eager: true })
   staff?: Staff;
 
-  @ManyToMany(() => Plant, (plant) => plant.users)
+  @ManyToMany(() => Plant, (plant) => plant.users, {
+    onDelete: 'CASCADE', // Adding CASCADE to ensure dependent join records are deleted
+  })
   plants: Plant[];
 
   @BeforeInsert()
@@ -64,11 +65,9 @@ export class User {
     this.password = await bcrypt.hash(this.password, 10);
   }
 
-  // Set creation timestamp
   @CreateDateColumn()
   createdAt: Date;
 
-  // Update this field on each update
   @UpdateDateColumn()
   updatedAt: Date;
 }

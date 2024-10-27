@@ -6,8 +6,6 @@ import {
   Param,
   Patch,
   Delete,
-  UsePipes,
-  ValidationPipe,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -54,5 +52,11 @@ export class SteamGenerationController {
   async remove(@Param('id') id: string) {
     await this.steamGenService.remove(id);
     return { message: 'Record deleted successfully' };
+  }
+
+  // get records by shift schedule id
+  @Get('shift-schedule/:id')
+  async getRecordsByShiftScheduleId(@Param('id') id: string) {
+    return this.steamGenService.findByShiftScheduleId(id);
   }
 }

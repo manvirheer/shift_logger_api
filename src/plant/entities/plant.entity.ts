@@ -23,15 +23,16 @@ export class Plant {
   @Column()
   plantContactPerson: string;
 
-  // Set creation timestamp
   @CreateDateColumn()
   createdAt: Date;
 
-  // Update this field on each update
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToMany(() => User, (user) => user.plants)
+  @ManyToMany(() => User, (user) => user.plants, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
   @JoinTable({
     name: 'user_plants',
     joinColumn: { name: 'plant_id', referencedColumnName: 'plantId' },
