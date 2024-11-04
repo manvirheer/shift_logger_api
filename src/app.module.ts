@@ -5,6 +5,10 @@ import { RecordModule } from './record/record.module';
 import { UserModule } from './user/user.module';
 import { PlantModule } from './plant/plant.module';
 import { ShiftModule } from './shift/shift.module';
+import { ShipmentModule } from './record/shipment/shipment.module';
+import { ActivityModule } from './record/activity/activity.module';
+import { Ash } from './record/ash/entities/ash.entity';
+import { AshModule } from './record/ash/ash.module';
 
 @Module({
   imports: [
@@ -19,15 +23,16 @@ import { ShiftModule } from './shift/shift.module';
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, // Set to false in production
+        synchronize: true, 
       }),
       inject: [ConfigService],
     }),
     RecordModule,
     UserModule,
     PlantModule,
-    ShiftModule
-
+    ShiftModule,
+    ShipmentModule,
+    ActivityModule,
   ],
 })
 export class AppModule { }

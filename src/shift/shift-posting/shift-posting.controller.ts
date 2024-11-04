@@ -27,6 +27,11 @@ import {
       const userId = req.user.id;
       return this.shiftPostingService.createShiftPosting(createDto, userId);
     }
+
+    @Get('/schedule/:id')
+    async getShiftPostingsByShiftScheduleId(@Param('id') id: string) {
+      return this.shiftPostingService.getShiftPostingsByShiftScheduleId(id);
+    }
   
     @Get()
     async getAllShiftPostings() {

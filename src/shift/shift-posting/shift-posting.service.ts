@@ -56,6 +56,14 @@ export class ShiftPostingService {
         return this.shiftPostingRepo.save(shiftPosting);
     }
 
+    // Get all shift postings by shift schedule ID
+    async getShiftPostingsByShiftScheduleId(shiftScheduleId: string): Promise<ShiftPosting[]> {
+        return this.shiftPostingRepo.find({
+            where: { shiftSchedule: { id: shiftScheduleId } },
+            relations: ['shiftSchedule', 'staff'],
+        });
+    }
+
     async getAllShiftPostings(): Promise<ShiftPosting[]> {
         return this.shiftPostingRepo.find({
             relations: ['shiftSchedule', 'shiftSchedule.plant', 'staff', 'createdBy', 'updatedBy'],

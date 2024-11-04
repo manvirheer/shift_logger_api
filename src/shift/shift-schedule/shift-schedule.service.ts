@@ -99,10 +99,9 @@ export class ShiftScheduleService {
     // Adjust to Indian Standard Time (IST) UTC+5:30
     const currentDate = new Date();
     currentDate.setHours(currentDate.getUTCHours() + 5);
-    currentDate.setMinutes(currentDate.getMinutes() + 30);
+    currentDate.setMinutes(currentDate.getUTCMinutes() + 30);
 
-    const currentTimeString = currentDate.toTimeString().slice(0, 8); // Format as HH:MM:SS
-    console.log(`Current IST Time: ${currentTimeString}`);
+    const currentTimeString = currentDate.toTimeString().slice(0, 8);
 
     let lookingForDate = new Date(currentDate); // Clone the current date
     let lookingForShift: ShiftTitle;
@@ -127,6 +126,52 @@ export class ShiftScheduleService {
       relations: ['plant', 'createdBy', 'updatedBy'],
     });
   }
+
+
+  /**
+   * Retrieves the previous shift schedules based on the current time.
+   */
+  async getPreviousShiftSchedules(): Promise<ShiftSchedule[]> {
+    // Adjust to Indian Standard Time (IST) UTC+5:30
+    const currentDate = new Date();
+    currentDate.setHours(currentDate.getUTCHours() + 5);
+    currentDate.setMinutes(currentDate.getUTCMinutes() + 30);
+    currentDate.setSeconds(0);
+    currentDate.setMilliseconds(0);
+
+    const currentTimeString = currentDate.toTimeString().slice(0, 8);
+
+    let lookingForDate = new Date(currentDate); // Clone the current date
+    let lookingForShift: ShiftTitle;
+
+    // Determine the previous shift based on the current time
+    if (currentTimeString < "06:00:00") {
+      lookingForDate.setDate(lookingForDate.getDate() - 1); // Previous day
+      lookingForShift = ShiftTitle.B; // Previous to Shift C is Shift B
+    } else if (currentTimeString >= "06:00:00" && currentTimeString < "14:00:00") {
+      lookingForShift = ShiftTitle.C; // Previous to Shift A is Shift C
+      lookingForDate.setDate(lookingForDate.getDate() - 1); // Previous day 
+    } else if (currentTimeString >= "14:00:00" && currentTimeString < "22:00:00") {
+      lookingForShift = ShiftTitle.A; // Previous to Shift B is Shift A
+    } else {
+      lookingForShift = ShiftTitle.B; // Previous to Shift C is Shift B
+    }
+
+    const dateString = lookingForDate.toISOString().slice(0, 10); // Format date as YYYY-MM-DD
+
+    // Fetch shift schedules for the determined date and shift title
+    const previousShifts = await this.shiftScheduleRepo.find({
+      where: { date: dateString, shiftTitle: lookingForShift },
+      relations: ['plant', 'createdBy', 'updatedBy'],
+    });
+
+    if (previousShifts.length === 0) {
+      throw new NotFoundException('No previous shift schedules found.');
+    }
+
+    return previousShifts;
+  }
+
 
   async updateShiftSchedule(
     id: string,

@@ -1,17 +1,38 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
-export class CreateInventoryDto {
-  @IsOptional()
+export class CreateInventoryRecordDto {
+  @IsUUID()
+  @IsNotEmpty()
+  plantId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  shiftScheduleId: string;
+
   @IsString()
-  shiftId?: string;
+  @IsNotEmpty()
+  recordDate: string;
+
+  @IsString()
+  @IsNotEmpty()
+  recordTime: string;
+
+  @IsString()
+  recordType?: string;
 
   @IsNumber()
-  shiftReading: number;
+  @IsNotEmpty()
+  initialValue: number;
 
+  @IsNumber()
   @IsOptional()
-  @IsString()
-  details?: string;
+  consumption?: number;
+
+  @IsNumber()
+  @IsOptional()
+  addition?: number;
 
   @IsString()
-  plantId: string; 
+  @IsOptional()
+  details?: string;
 }

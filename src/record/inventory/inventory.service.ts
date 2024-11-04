@@ -1,12 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-// Import entities and DTOs
 import { InventoryRecord } from './entities/inventory-record.entity';
-import { CreateInventoryDto } from './dtos/create-inventory.dto';
-import { UpdateInventoryDto } from './dtos/update-inventory.dto';
-import { User } from '../../user/entities/user.entity';
+import { CreateInventoryRecordDto } from './dtos/create-inventory.dto';
+import { UpdateInventoryRecordDto } from './dtos/update-inventory.dto';
+import { User } from 'src/user/entities/user.entity';
 import { Plant } from 'src/plant/entities/plant.entity';
+import { ShiftSchedule } from 'src/shift/shift-schedule/entities/shift-schedule.entity';
+
+interface InventoryQueryParams {
+  plantId?: string;
+  shiftScheduleId?: string;
+  // Add other query parameters as needed
+}
 
 @Injectable()
 export class InventoryService {
@@ -17,76 +23,87 @@ export class InventoryService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Plant)
     private readonly plantRepo: Repository<Plant>,
+    @InjectRepository(ShiftSchedule)
+    private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
   ) {}
 
-  async create(
-    data: CreateInventoryDto,
-    userId: string
-  ): Promise<InventoryRecord> {
+  async create(data: CreateInventoryRecordDto, userId: string): Promise<InventoryRecord> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException('User not found');
 
     const plant = await this.plantRepo.findOne({ where: { plantId: data.plantId } });
-    if (!plant) {
-      throw new NotFoundException('Plant not found');
-    }
+    if (!plant) throw new NotFoundException('Plant not found');
 
-    const record = this.inventoryRepo.create({
+    const shiftSchedule = await this.shiftScheduleRepo.findOne({ where: { id: data.shiftScheduleId } });
+    if (!shiftSchedule) throw new NotFoundException('Shift Schedule not found');
+
+    const inventory = this.inventoryRepo.create({
       ...data,
       createdBy: user,
-      plant: plant,
+      plant,
+      shiftSchedule,
       updatedBy: null,
     });
 
-    return this.inventoryRepo.save(record);
+    return this.inventoryRepo.save(inventory);
   }
 
-  async findAll(): Promise<InventoryRecord[]> {
+  async findAll(params: InventoryQueryParams): Promise<InventoryRecord[]> {
+    const whereConditions: any = {};
+
+    if (params.plantId) {
+      whereConditions.plant = { plantId: params.plantId };
+    }
+
+    if (params.shiftScheduleId) {
+      whereConditions.shiftSchedule = { id: params.shiftScheduleId };
+    }
+
     return this.inventoryRepo.find({
-      relations: ['createdBy', 'updatedBy', 'plant'],
+      where: whereConditions,
+      relations: ['createdBy', 'updatedBy', 'plant', 'shiftSchedule'],
+      order: { createdAt: 'ASC' },
     });
   }
 
   async findOne(id: string): Promise<InventoryRecord> {
-    const record = await this.inventoryRepo.findOne({
+    const inventory = await this.inventoryRepo.findOne({
       where: { id },
-      relations: ['createdBy', 'updatedBy'],
+      relations: ['createdBy', 'updatedBy', 'plant', 'shiftSchedule'],
     });
-    if (!record) {
-      throw new NotFoundException(`Record with ID ${id} not found`);
-    }
-    return record;
+    if (!inventory) throw new NotFoundException(`Inventory record with ID ${id} not found`);
+    return inventory;
   }
 
-  async update(
-    id: string,
-    updateData: UpdateInventoryDto,
-    userId: string,
-  ): Promise<InventoryRecord> {
-    const inventoryRecord = await this.inventoryRepo.findOne({ where: { id } });
-    if (!inventoryRecord) {
-      throw new NotFoundException(`Record with ID ${id} not found`);
+  async update(id: string, updateData: UpdateInventoryRecordDto, userId: string): Promise<InventoryRecord> {
+    const inventory = await this.inventoryRepo.findOne({
+      where: { id },
+      relations: ['createdBy', 'updatedBy', 'plant', 'shiftSchedule'],
+    });
+    if (!inventory) throw new NotFoundException(`Inventory record with ID ${id} not found`);
+
+    if (updateData.plantId) {
+      const plant = await this.plantRepo.findOne({ where: { plantId: updateData.plantId } });
+      if (!plant) throw new NotFoundException('Plant not found');
+      inventory.plant = plant;
     }
 
-    Object.assign(inventoryRecord, updateData);
+    if (updateData.shiftScheduleId) {
+      const shiftSchedule = await this.shiftScheduleRepo.findOne({ where: { id: updateData.shiftScheduleId } });
+      if (!shiftSchedule) throw new NotFoundException('Shift Schedule not found');
+      inventory.shiftSchedule = shiftSchedule;
+    }
 
-    // Update the updatedBy field
     const user = await this.userRepo.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    inventoryRecord.updatedBy = user;
+    if (!user) throw new NotFoundException('User not found');
+    inventory.updatedBy = user;
 
-    await this.inventoryRepo.save(inventoryRecord);
-    return inventoryRecord;
+    Object.assign(inventory, updateData);
+    return this.inventoryRepo.save(inventory);
   }
 
   async remove(id: string): Promise<void> {
     const result = await this.inventoryRepo.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Record with ID ${id} not found`);
-    }
+    if (result.affected === 0) throw new NotFoundException(`Inventory record with ID ${id} not found`);
   }
 }

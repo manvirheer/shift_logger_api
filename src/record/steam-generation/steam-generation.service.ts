@@ -54,9 +54,14 @@ export class SteamGenerationService {
     return this.steamGenRepo.save(record);
   }
 
+  async deleteAll(): Promise<void> {
+    await this.steamGenRepo.delete({});
+  }
+
   async findAll(): Promise<SteamGenerationRecord[]> {
     return this.steamGenRepo.find({
       relations: ['createdBy', 'updatedBy', 'plant', 'shiftSchedule'],
+      order: { createdAt: 'ASC'},
     });
   }
 

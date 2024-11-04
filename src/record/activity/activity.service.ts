@@ -6,6 +6,7 @@ import { CreateActivityDto } from './dtos/create-activity.dto';
 import { UpdateActivityDto } from './dtos/update-activity.dto';
 import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
+import { ShiftSchedule } from '../../shift/shift-schedule/entities/shift-schedule.entity';
 
 @Injectable()
 export class ActivityService {
@@ -16,7 +17,9 @@ export class ActivityService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Plant)
     private readonly plantRepo: Repository<Plant>,
-  ) {}
+    @InjectRepository(ShiftSchedule)
+    private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
+  ) { }
 
   async create(data: CreateActivityDto, userId: string): Promise<ActivityRecord> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
@@ -29,10 +32,13 @@ export class ActivityService {
       throw new NotFoundException('Plant not found');
     }
 
+    const shiftSchedule = await this.shiftScheduleRepo.findOne({ where: { id: data.shiftScheduleId } });
+
     const activityRecord = this.activityRepo.create({
       ...data,
       createdBy: user,
       plant: plant,
+      shiftSchedule: shiftSchedule,
       updatedBy: null,
     });
 
@@ -41,30 +47,29 @@ export class ActivityService {
 
   async findAll(): Promise<ActivityRecord[]> {
     return this.activityRepo.find({
-      relations: ['createdBy', 'updatedBy', 'plant'],
+      relations: ['createdBy', 'updatedBy', 'plant', 'shiftSchedule'],
+      order: { createdAt: 'ASC' },
     });
   }
 
-  async findOne(id: string): Promise<ActivityRecord> {
+  async findOne(activityId: string): Promise<ActivityRecord> {
     const record = await this.activityRepo.findOne({
-      where: { id },
+      where: { activityId },
       relations: ['createdBy', 'updatedBy', 'plant'],
     });
     if (!record) {
-      throw new NotFoundException(`Activity record with ID ${id} not found`);
+      throw new NotFoundException(`Activity record with ID ${activityId} not found`);
     }
     return record;
   }
 
-  async update(id: string, updateData: UpdateActivityDto, userId: string): Promise<ActivityRecord> {
-    const activityRecord = await this.activityRepo.findOne({ where: { id } });
+  async update(activityId: string, updateData: UpdateActivityDto, userId: string): Promise<ActivityRecord> {
+    const activityRecord = await this.activityRepo.findOne({ where: { activityId } });
+
     if (!activityRecord) {
-      throw new NotFoundException(`Activity record with ID ${id} not found`);
+      throw new NotFoundException(`Activity record with ID ${activityId} not found`);
     }
-
     Object.assign(activityRecord, updateData);
-
-    // Update the updatedBy field
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -75,10 +80,10 @@ export class ActivityService {
     return activityRecord;
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.activityRepo.delete(id);
+  async remove(activityId: string): Promise<void> {
+    const result = await this.activityRepo.delete(activityId);
     if (result.affected === 0) {
-      throw new NotFoundException(`Activity record with ID ${id} not found`);
+      throw new NotFoundException(`Activity record with ID ${activityId} not found`);
     }
   }
 }

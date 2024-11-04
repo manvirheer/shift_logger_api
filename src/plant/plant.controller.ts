@@ -38,6 +38,12 @@ export class PlantController {
     return plants;
   }
 
+  @Get('staff/:staffId')
+  async getPlantIdByStaffId(@Param('staffId') staffId: string) {
+    const plantId = await this.plantService.getPlantIdByStaffId(staffId);
+    return { plantId };
+  }
+
   @Get(':plantId')
   async getPlantById(@Param('plantId') plantId: string) {
     const plant = await this.plantService.findPlantById(plantId); 
@@ -86,4 +92,6 @@ export class PlantController {
   async removeAllUsersFromPlant(@Param('plantId') plantId: string) {
     return this.plantService.removeAllUsersFromPlant(plantId);
   }
+
+
 }

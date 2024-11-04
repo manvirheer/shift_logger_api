@@ -36,7 +36,6 @@ import {
       return staff;
     }
 
-
     @Post('register-admin')
     async registerAdmin(@Body() createAdminDto: CreateAdminDto) {
       const user = await this.userService.createAdmin(createAdminDto);

@@ -47,6 +47,23 @@ export class PlantService {
     await this.plantRepo.remove(plant);
   }
 
+  // Get the plant id from staff id by checking the user_plants tables
+  async getPlantIdByStaffId(staffId: string): Promise<string> {
+    const user = await this.userRepo.findOne({
+      where: { id: staffId },
+      relations: ['plants'],
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (user.plants.length === 0) {
+      throw new NotFoundException('Plant not found for user');
+    }
+    
+    return user.plants[0].plantId;
+  }
+
+
   async addUsersToPlant(
     plantId: string,
     userIds: string[],

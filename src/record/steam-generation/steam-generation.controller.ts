@@ -33,6 +33,11 @@ export class SteamGenerationController {
     return this.steamGenService.findAll();
   }
 
+  @Delete()
+  async deleteAll() {
+    await this.steamGenService.deleteAll();
+    return { message: 'All records deleted successfully' };
+  }
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.steamGenService.findOne(id);

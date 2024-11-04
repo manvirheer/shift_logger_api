@@ -7,12 +7,14 @@ import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
 import { UserModule } from '../../user/user.module';
 import { PlantModule } from '../../plant/plant.module';
+import { ShiftSchedule } from 'src/shift/shift-schedule/entities/shift-schedule.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ActivityRecord, User, Plant]),
+    TypeOrmModule.forFeature([ActivityRecord, User, Plant, ShiftSchedule]),
     UserModule,
     PlantModule,
+    ShiftSchedule,
   ],
   controllers: [ActivityController],
   providers: [ActivityService],

@@ -12,6 +12,9 @@ export class CreateActivityDto {
   @IsString()
   activityDetails: string;
 
+  @IsString()
+  shiftScheduleId: string;
+
   @IsOptional()
   @IsString()
   remarks?: string;

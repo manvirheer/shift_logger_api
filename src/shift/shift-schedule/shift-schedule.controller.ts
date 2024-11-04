@@ -41,6 +41,10 @@ import {
       return await this.shiftScheduleService.getActiveShiftSchedules();
     }
 
+    @Get('previous')
+    async getPreviousShifts() {
+      return await this.shiftScheduleService.getPreviousShiftSchedules();
+    }
   
     @Patch(':id')
     async updateShiftSchedule(
