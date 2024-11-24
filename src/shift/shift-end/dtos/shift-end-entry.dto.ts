@@ -1,26 +1,25 @@
-import { IsString, IsNumber } from 'class-validator';
-import { DefaultDeserializer } from 'v8';
+import { IsString, IsNumber, IsUUID, IsOptional } from 'class-validator';
 
 export class ShiftEndEntryDto {
-    @IsString()
-    shiftScheduleId: string;
+  @IsUUID()
+  shiftScheduleId: string;
 
-    @IsNumber()
-    briquetteConsumption: number;
+  @IsNumber()
+  briquetteConsumption: number;
 
-    @IsString()
-    plantId: string;
+  @IsUUID()
+  plantId: string;
 
-    @IsNumber()
-    ashGenerated: number;
+  @IsNumber()
+  ashGenerated: number;
 
-    @IsNumber()
-    steamGenerationInitialReading: number;
+  @IsNumber()
+  steamGenerationInitialReading: number;
 
-    @IsNumber()
-    steamGenerationFinalReading: number;
+  @IsNumber()
+  steamGenerationFinalReading: number;
 
-    @IsString()
-    remarks: string = 'None';
-
+  @IsString()
+  @IsOptional()
+  remarks?: string;
 }

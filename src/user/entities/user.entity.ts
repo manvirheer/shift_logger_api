@@ -7,6 +7,7 @@ import {
   ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  BeforeUpdate,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
@@ -14,11 +15,13 @@ import { Admin } from './admin.entity';
 import { Staff } from './staff.entity';
 import { Plant } from '../../plant/entities/plant.entity';
 
+// Enum representing user roles
 export enum UserRole {
   ADMIN = 'Admin',
   STAFF = 'Staff',
 }
 
+// Entity representing a user
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -33,10 +36,10 @@ export class User {
   @Column()
   mobile: string;
 
-  @Column()
+  @Column({ name: 'emergency_contact_name' })
   emergencyContactName: string;
 
-  @Column()
+  @Column({ name: 'emergency_contact_phone_number' })
   emergencyContactPhoneNumber: string;
 
   @Column()
@@ -56,18 +59,19 @@ export class User {
   staff?: Staff;
 
   @ManyToMany(() => Plant, (plant) => plant.users, {
-    onDelete: 'CASCADE', // Adding CASCADE to ensure dependent join records are deleted
+    onDelete: 'CASCADE',
   })
   plants: Plant[];
 
   @BeforeInsert()
+  @BeforeUpdate()
   async hashPassword() {
     this.password = await bcrypt.hash(this.password, 10);
   }
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

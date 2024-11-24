@@ -1,15 +1,13 @@
-import { Entity, OneToOne, PrimaryColumn, Column, JoinColumn } from 'typeorm';
+import { Entity, OneToOne, PrimaryColumn, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 
+// Entity representing an admin user
 @Entity('admins')
 export class Admin {
   @PrimaryColumn('uuid')
-  id: string; 
+  id: string;
 
   @OneToOne(() => User, (user) => user.admin)
   @JoinColumn({ name: 'id' })
   user: User;
-
-//   @Column({ nullable: true })
-//   adminSpecificField?: string;
 }

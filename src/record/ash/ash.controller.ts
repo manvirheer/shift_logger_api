@@ -16,7 +16,7 @@ import {
   import { AuthGuard } from '@nestjs/passport';
   
   @UseGuards(AuthGuard('jwt'))
-  @Controller('ash')
+  @Controller('record/ash')
   export class AshController {
     constructor(private readonly ashGenService: AshService) {}
   

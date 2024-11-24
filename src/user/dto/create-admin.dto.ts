@@ -1,26 +1,6 @@
-import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { CreateUserDto } from './create-user.dto';
 
-export class CreateAdminDto {
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  name: string;
-
-  @IsString()
-  mobile: string;
-
-  @IsString()
-  emergencyContactName: string;
-
-  @IsString()
-  emergencyContactPhoneNumber: string;
-
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-
-//   @IsOptional()
-//   @IsString()
-//   adminSpecificField?: string;
+// DTO for creating an admin user
+export class CreateAdminDto extends CreateUserDto {
+  // Add admin-specific fields here if needed
 }

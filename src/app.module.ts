@@ -9,6 +9,9 @@ import { ShipmentModule } from './record/shipment/shipment.module';
 import { ActivityModule } from './record/activity/activity.module';
 import { Ash } from './record/ash/entities/ash.entity';
 import { AshModule } from './record/ash/ash.module';
+import { DataEntryPeriod } from './data-entry-period/entities/data-entry-period.entity';
+import { DataEntryPeriodModule } from './data-entry-period/data-entry-period.module';
+import { InventoryModule } from './record/inventory/inventory.module';
 
 @Module({
   imports: [
@@ -23,16 +26,15 @@ import { AshModule } from './record/ash/ash.module';
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true, 
+        synchronize: true, // Set to false in production
       }),
       inject: [ConfigService],
     }),
     RecordModule,
+    DataEntryPeriodModule,
     UserModule,
     PlantModule,
     ShiftModule,
-    ShipmentModule,
-    ActivityModule,
   ],
 })
 export class AppModule { }

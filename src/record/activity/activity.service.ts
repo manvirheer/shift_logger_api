@@ -7,6 +7,7 @@ import { UpdateActivityDto } from './dtos/update-activity.dto';
 import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
 import { ShiftSchedule } from '../../shift/shift-schedule/entities/shift-schedule.entity';
+import { DataEntryPeriodService } from 'src/data-entry-period/data-entry-period.service';
 
 @Injectable()
 export class ActivityService {
@@ -19,6 +20,7 @@ export class ActivityService {
     private readonly plantRepo: Repository<Plant>,
     @InjectRepository(ShiftSchedule)
     private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
+    private readonly dataEntryPeriodService: DataEntryPeriodService, 
   ) { }
 
   async create(data: CreateActivityDto, userId: string): Promise<ActivityRecord> {
@@ -34,11 +36,16 @@ export class ActivityService {
 
     const shiftSchedule = await this.shiftScheduleRepo.findOne({ where: { id: data.shiftScheduleId } });
 
+    // Fetch the entry period using DataEntryPeriodService
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(plant.plantId, new Date());
+
     const activityRecord = this.activityRepo.create({
       ...data,
       createdBy: user,
       plant: plant,
       shiftSchedule: shiftSchedule,
+      entryPeriod, 
+      entryDate,
       updatedBy: null,
     });
 
@@ -69,15 +76,18 @@ export class ActivityService {
     if (!activityRecord) {
       throw new NotFoundException(`Activity record with ID ${activityId} not found`);
     }
-    Object.assign(activityRecord, updateData);
+
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    activityRecord.updatedBy = user;
 
-    await this.activityRepo.save(activityRecord);
-    return activityRecord;
+    // If entry period needs updating, fetch it again
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(activityRecord.plant.plantId, new Date());
+
+    Object.assign(activityRecord, updateData, { entryPeriod, entryDate, updatedBy: user });
+
+    return this.activityRepo.save(activityRecord);
   }
 
   async remove(activityId: string): Promise<void> {

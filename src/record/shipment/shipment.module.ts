@@ -13,6 +13,7 @@ import { UserModule } from '../../user/user.module';
 import { PlantModule } from '../../plant/plant.module';
 import { ShiftScheduleModule } from '../../shift/shift-schedule/shift-schedule.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { DataEntryPeriodModule } from 'src/data-entry-period/data-entry-period.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { InventoryModule } from '../inventory/inventory.module';
     UserModule,
     PlantModule,
     ShiftScheduleModule,
+    DataEntryPeriodModule,
     InventoryModule, 
   ],
   providers: [ShipmentService],

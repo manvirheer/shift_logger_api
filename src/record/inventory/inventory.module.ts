@@ -8,11 +8,13 @@ import { UserModule } from '../../user/user.module';
 import { PlantModule } from 'src/plant/plant.module';
 import { ShiftSchedule } from 'src/shift/shift-schedule/entities/shift-schedule.entity';
 import { Plant } from 'src/plant/entities/plant.entity';
+import { DataEntryPeriodModule } from 'src/data-entry-period/data-entry-period.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([InventoryRecord, User, Plant, ShiftSchedule]),
-    UserModule, PlantModule
+    UserModule, PlantModule, 
+    DataEntryPeriodModule 
   ],
   controllers: [InventoryController],
   providers: [InventoryService],

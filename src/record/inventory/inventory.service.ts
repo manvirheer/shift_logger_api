@@ -7,6 +7,7 @@ import { UpdateInventoryRecordDto } from './dtos/update-inventory.dto';
 import { User } from 'src/user/entities/user.entity';
 import { Plant } from 'src/plant/entities/plant.entity';
 import { ShiftSchedule } from 'src/shift/shift-schedule/entities/shift-schedule.entity';
+import { DataEntryPeriodService } from 'src/data-entry-period/data-entry-period.service';
 
 interface InventoryQueryParams {
   plantId?: string;
@@ -25,7 +26,8 @@ export class InventoryService {
     private readonly plantRepo: Repository<Plant>,
     @InjectRepository(ShiftSchedule)
     private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
-  ) {}
+    private readonly dataEntryPeriodService: DataEntryPeriodService,
+  ) { }
 
   async create(data: CreateInventoryRecordDto, userId: string): Promise<InventoryRecord> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
@@ -44,6 +46,10 @@ export class InventoryService {
       shiftSchedule,
       updatedBy: null,
     });
+
+    const { entryPeriod, entryDate } = await this.dataEntryPeriodService.findPeriodForTime(plant.plantId, new Date());
+    inventory.entryPeriod = entryPeriod;
+    inventory.entryDate = entryDate;
 
     return this.inventoryRepo.save(inventory);
   }
@@ -97,6 +103,10 @@ export class InventoryService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     inventory.updatedBy = user;
+
+    const { entryPeriod, entryDate } = await this.dataEntryPeriodService.findPeriodForTime(inventory.plant.plantId, new Date());
+    inventory.entryPeriod = entryPeriod;
+    inventory.entryDate = entryDate;
 
     Object.assign(inventory, updateData);
     return this.inventoryRepo.save(inventory);

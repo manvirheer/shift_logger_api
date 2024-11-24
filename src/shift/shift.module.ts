@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ShiftScheduleModule } from './shift-schedule/shift-schedule.module';
-import { ShiftPostingModule } from './shift-posting/shift-posting.module';
+import { ShiftAssignmentModule } from './shift-assignment/shift-assignment.module';
 import { ShiftEndModule } from './shift-end/shift-end.module';
+import { ShiftTemplateModule } from './shift-template/shift-template.module';
 
 @Module({
-  imports: [ShiftScheduleModule, ShiftPostingModule, ShiftEndModule],
+  imports: [ShiftScheduleModule, ShiftAssignmentModule, ShiftEndModule, ShiftTemplateModule],
 })
 export class ShiftModule {}

@@ -1,26 +1,8 @@
-import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
+import { IsString } from 'class-validator';
+import { CreateUserDto } from './create-user.dto';
 
-export class CreateStaffDto {
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  name: string;
-
-  @IsString()
-  mobile: string;
-
-  @IsString()
-  emergencyContactName: string;
-
-  @IsString()
-  emergencyContactPhoneNumber: string;
-
-  @IsString()
-  @IsNotEmpty()
-  password: string;
-
-  // Staff-specific fields
+// DTO for creating a staff user
+export class CreateStaffDto extends CreateUserDto {
   @IsString()
   a2pEmpId: string;
 

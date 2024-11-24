@@ -6,6 +6,8 @@ import {
     JoinColumn,
     CreateDateColumn,
     UpdateDateColumn,
+    In,
+    Index,
   } from 'typeorm';
   import { User } from '../../../user/entities/user.entity';
   import { Plant } from '../../../plant/entities/plant.entity';
@@ -40,12 +42,19 @@ import {
     plant: Plant;
   
     // Relation to ShiftSchedule
-    @ManyToOne(() => ShiftSchedule, { nullable: false })
+    @ManyToOne(() => ShiftSchedule, { nullable: false})
     @JoinColumn({ name: 'shift_schedule_id' })
     shiftSchedule: ShiftSchedule;
+
+    @Column({ type: 'varchar', nullable: true })
+    entryPeriod: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    entryDate: string;
   
     // Optional fields
     @Column({ name: 'time_start', type: 'varchar', nullable: true })
+    @Index()
     timeStart?: string;
   
     @Column({ name: 'time_end', type: 'varchar', nullable: true })

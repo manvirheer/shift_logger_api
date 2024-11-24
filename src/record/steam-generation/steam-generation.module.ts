@@ -11,6 +11,7 @@ import { ShiftSchedule } from '../../shift/shift-schedule/entities/shift-schedul
 import { ShiftScheduleModule } from '../../shift/shift-schedule/shift-schedule.module';
 import { UserModule } from '../../user/user.module';
 import { PlantModule } from '../../plant/plant.module';
+import { DataEntryPeriodModule } from 'src/data-entry-period/data-entry-period.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PlantModule } from '../../plant/plant.module';
     ShiftScheduleModule,
     UserModule,
     PlantModule,
+    DataEntryPeriodModule,
   ],
   providers: [SteamGenerationService],
   controllers: [SteamGenerationController],

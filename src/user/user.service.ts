@@ -1,14 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm/index';
+import { Repository, DataSource } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
 import { Admin } from './entities/admin.entity';
 import { Staff } from './entities/staff.entity';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { CreateStaffDto } from './dto/create-staff.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
+import { UpdateStaffDto } from './dto/update-staff.dto';
 import * as bcrypt from 'bcrypt';
 
+// Service for user operations
 @Injectable()
 export class UserService {
   constructor(
@@ -18,64 +20,160 @@ export class UserService {
     private readonly adminRepo: Repository<Admin>,
     @InjectRepository(Staff)
     private readonly staffRepo: Repository<Staff>,
+    private readonly dataSource: DataSource,
   ) {}
 
-  // find all staff
-  async findAllStaff(): Promise<User[]> {
+  // Create a new admin user within a transaction
+  async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
+    return this.dataSource.transaction(async (manager) => {
+      const user = this.userRepo.create({
+        ...createAdminDto,
+        role: UserRole.ADMIN,
+      });
+
+      const savedUser = await manager.save(user);
+
+      const admin = this.adminRepo.create({
+        id: savedUser.id,
+        user: savedUser,
+      });
+
+      await manager.save(admin);
+
+      return savedUser;
+    });
+  }
+
+  // Create a new staff user within a transaction
+  async createStaff(createStaffDto: CreateStaffDto): Promise<User> {
+    return this.dataSource.transaction(async (manager) => {
+      const user = this.userRepo.create({
+        ...createStaffDto,
+        role: UserRole.STAFF,
+      });
+
+      const savedUser = await manager.save(user);
+
+      const staff = this.staffRepo.create({
+        id: savedUser.id,
+        user: savedUser,
+        a2pEmpId: createStaffDto.a2pEmpId,
+        fatherName: createStaffDto.fatherName,
+        areaOfWork: createStaffDto.areaOfWork,
+        natureOfWork: createStaffDto.natureOfWork,
+      });
+
+      await manager.save(staff);
+
+      return savedUser;
+    });
+  }
+
+  // Find all admins with optional relations
+  async findAllAdmins(relations: string[] = []): Promise<User[]> {
+    return this.userRepo.find({
+      where: { role: UserRole.ADMIN },
+      relations,
+    });
+  }
+
+  // Find an admin by ID with optional relations
+  async findAdminById(id: string, relations: string[] = []): Promise<User | undefined> {
+    return this.userRepo.findOne({
+      where: { id, role: UserRole.ADMIN },
+      relations,
+    });
+  }
+
+  // Find all staff with optional relations
+  async findAllStaff(relations: string[] = []): Promise<User[]> {
     return this.userRepo.find({
       where: { role: UserRole.STAFF },
+      relations,
     });
   }
 
-  async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
-    // Create the user
-    const user = this.userRepo.create({
-      ...createAdminDto,
-      role: UserRole.ADMIN,
+  // Find a staff by ID with optional relations
+  async findStaffById(id: string, relations: string[] = []): Promise<User | undefined> {
+    return this.userRepo.findOne({
+      where: { id, role: UserRole.STAFF },
+      relations,
     });
-
-    // Save the user
-    const savedUser = await this.userRepo.save(user);
-
-    // Create the admin record
-    const admin = this.adminRepo.create({
-      id: savedUser.id, 
-      user: savedUser,
-    //   adminSpecificField: createAdminDto.adminSpecificField,
-    });
-
-    // Save the admin record
-    await this.adminRepo.save(admin);
-
-    return savedUser;
   }
 
-  async createStaff(createStaffDto: CreateStaffDto): Promise<User> {
-    // Create the user
-    const user = this.userRepo.create({
-      ...createStaffDto,
-      role: UserRole.STAFF,
+  // Update an admin user within a transaction
+  async updateAdmin(id: string, updateAdminDto: UpdateAdminDto): Promise<User> {
+    return this.dataSource.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id, role: UserRole.ADMIN } });
+      if (!user) {
+        throw new NotFoundException('Admin not found');
+      }
+
+      if (updateAdminDto.password) {
+        updateAdminDto.password = await bcrypt.hash(updateAdminDto.password, 10);
+      }
+
+      Object.assign(user, updateAdminDto);
+      await manager.save(user);
+
+      // Update admin-specific fields if any
+
+      return user;
     });
-
-    // Save the user
-    const savedUser = await this.userRepo.save(user);
-
-    // Create the staff record
-    const staff = this.staffRepo.create({
-      id: savedUser.id, // Use the same ID
-      user: savedUser,
-      a2pEmpId: createStaffDto.a2pEmpId,
-      fatherName: createStaffDto.fatherName,
-      areaOfWork: createStaffDto.areaOfWork,
-      natureOfWork: createStaffDto.natureOfWork,
-    });
-
-    // Save the staff record
-    await this.staffRepo.save(staff);
-
-    return savedUser;
   }
 
+  // Update a staff user within a transaction
+  async updateStaff(id: string, updateStaffDto: UpdateStaffDto): Promise<User> {
+    return this.dataSource.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id, role: UserRole.STAFF } });
+      if (!user) {
+        throw new NotFoundException('Staff not found');
+      }
+
+      if (updateStaffDto.password) {
+        updateStaffDto.password = await bcrypt.hash(updateStaffDto.password, 10);
+      }
+
+      Object.assign(user, updateStaffDto);
+      await manager.save(user);
+
+      const staff = await manager.findOne(Staff, { where: { id: user.id } });
+      if (staff) {
+        Object.assign(staff, updateStaffDto);
+        await manager.save(staff);
+      }
+
+      return user;
+    });
+  }
+
+  // Remove an admin user within a transaction
+  async removeAdmin(id: string): Promise<void> {
+    return this.dataSource.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id, role: UserRole.ADMIN } });
+      if (!user) {
+        throw new NotFoundException('Admin not found');
+      }
+
+      await manager.delete(Admin, id);
+      await manager.delete(User, id);
+    });
+  }
+
+  // Remove a staff user within a transaction
+  async removeStaff(id: string): Promise<void> {
+    return this.dataSource.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id, role: UserRole.STAFF } });
+      if (!user) {
+        throw new NotFoundException('Staff not found');
+      }
+
+      await manager.delete(Staff, id);
+      await manager.delete(User, id);
+    });
+  }
+
+  // Additional methods for authentication
   async findByEmail(email: string): Promise<User | undefined> {
     return this.userRepo.findOne({
       where: { email },
@@ -94,52 +192,5 @@ export class UserService {
     return this.userRepo.findOne({
       where: { id },
     });
-  }
-
-  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.findById(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
-    }
-
-    // Update common user fields
-    Object.assign(user, updateUserDto);
-    await this.userRepo.save(user);
-
-    // Update specific fields based on user role
-    if (user.role === UserRole.ADMIN) {
-      const admin = await this.adminRepo.findOne({ where: { id: user.id } });
-      if (admin) {
-        Object.assign(admin, updateUserDto);
-        await this.adminRepo.save(admin);
-      }
-    } else if (user.role === UserRole.STAFF) {
-      const staff = await this.staffRepo.findOne({ where: { id: user.id } });
-      if (staff) {
-        Object.assign(staff, updateUserDto);
-        await this.staffRepo.save(staff);
-      }
-    }
-
-    return user;
-  }
-
-  async removeUser(id: string): Promise<void> {
-    const user = await this.findById(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (user.role === UserRole.ADMIN) {
-      await this.adminRepo.delete(id);
-    } else if (user.role === UserRole.STAFF) {
-      await this.staffRepo.delete(id);
-    }
-
-    await this.userRepo.delete(id);
   }
 }

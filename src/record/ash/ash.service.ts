@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions } from 'typeorm';
-import { Ash} from './entities/ash.entity';
+import { Ash } from './entities/ash.entity';
 import { CreateAshDto } from './dtos/create-ash.dto';
 import { UpdateAshDto } from './dtos/update-ash.dto';
 import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
 import { ShiftSchedule } from '../../shift/shift-schedule/entities/shift-schedule.entity';
+import { DataEntryPeriodService } from 'src/data-entry-period/data-entry-period.service';
 
 @Injectable()
 export class AshService {
@@ -19,7 +20,8 @@ export class AshService {
     private readonly plantRepo: Repository<Plant>,
     @InjectRepository(ShiftSchedule)
     private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
-  ) {}
+    private readonly dataEntryPeriodService: DataEntryPeriodService,
+  ) { }
 
   async create(data: CreateAshDto, userId: string): Promise<Ash> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
@@ -31,12 +33,16 @@ export class AshService {
     const shiftSchedule = await this.shiftScheduleRepo.findOne({ where: { id: data.shiftScheduleId } });
     if (!shiftSchedule) throw new NotFoundException('Shift Schedule not found');
 
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(plant.plantId, new Date());
+
     const ashGeneration = this.ashGenRepo.create({
       ...data,
       createdBy: user,
       plant,
       shiftSchedule,
       updatedBy: null,
+      entryPeriod,
+      entryDate
     });
 
     return this.ashGenRepo.save(ashGeneration);
@@ -81,7 +87,13 @@ export class AshService {
       ashGeneration.shiftSchedule = shiftSchedule;
     }
 
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(ashGeneration.plant.plantId, new Date());
+
+    ashGeneration.entryPeriod = entryPeriod;
+    ashGeneration.entryDate = entryDate;
+    
     Object.assign(ashGeneration, data);
+
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');

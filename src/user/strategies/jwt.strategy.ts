@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserService } from '../user.service';
 import { User } from '../entities/user.entity';
 
+// JWT strategy for validating JWT tokens
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -13,7 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false, // Token expiration will be checked
+      ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET'),
     });
   }

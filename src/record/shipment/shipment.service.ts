@@ -10,6 +10,7 @@ import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
 import { ShiftSchedule } from 'src/shift/shift-schedule/entities/shift-schedule.entity';
 import { InventoryRecord } from '../inventory/entities/inventory-record.entity';
+import { DataEntryPeriodService } from 'src/data-entry-period/data-entry-period.service';
 
 interface ShipmentQueryParams {
   shiftScheduleId?: string;
@@ -33,6 +34,7 @@ export class ShipmentService {
     private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
     @InjectRepository(InventoryRecord)
     private readonly inventoryRepo: Repository<InventoryRecord>, // Inject InventoryRecord repository
+    private readonly dataEntryPeriodService: DataEntryPeriodService, 
   ) { }
 
   async create(data: CreateShipmentDto, userId: string): Promise<Shipment> {
@@ -50,12 +52,15 @@ export class ShipmentService {
     if (!shiftSchedule) {
       throw new NotFoundException('Shift Schedule not found');
     }
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(plant.plantId, new Date());
 
     const shipment = this.shipmentRepo.create({
       ...data,
       createdBy: user,
       plant,
       shiftSchedule,
+      entryDate,
+      entryPeriod,
       updatedBy: null,
     });
 
@@ -136,6 +141,11 @@ export class ShipmentService {
 
     const updatedShipment = await this.shipmentRepo.save(shipment);
 
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(shipment.plant.plantId, new Date());
+    updatedShipment.entryPeriod = entryPeriod;
+    updatedShipment.entryDate = entryDate;
+
+
     // Update InventoryRecord based on the change in incomingBriquetteWeight
     await this.updateInventoryOnUpdate(updatedShipment, originalWeight, user);
 
@@ -171,14 +181,16 @@ export class ShipmentService {
       relations: ['plant', 'shiftSchedule'],
     });
 
-    console.log('latestInventory when adding shipment', latestInventory);
-
     const newInitialValue = latestInventory ? latestInventory.finalValue : 0;
+
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(shipment.plant.plantId, new Date());
 
     const newInventory = this.inventoryRepo.create({
       shipment: shipment,
       createdBy: user,
       plant: shipment.plant,
+      entryPeriod,
+      entryDate,
       shiftSchedule: shipment.shiftSchedule,
       recordDate: shipment.recordDate,
       recordTime: shipment.recordTime,
@@ -213,6 +225,10 @@ export class ShipmentService {
       // Update the updatedBy field
       inventory.updatedBy = user;
 
+      const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(shipment.plant.plantId, new Date());
+      inventory.entryPeriod = entryPeriod;
+      inventory.entryDate = entryDate;
+
       await this.inventoryRepo.save(inventory);
     } else {
       // If no InventoryRecord exists, create one
@@ -236,6 +252,10 @@ export class ShipmentService {
       if (inventory.addition < 0) {
         inventory.addition = 0; // Prevent negative inventory
       }
+
+      const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(shipment.plant.plantId, new Date());
+      inventory.entryPeriod = entryPeriod;
+      inventory.entryDate = entryDate;
 
       // Optionally, update details or other fields
       inventory.details = `Deleted Shipment ID: ${shipment.id}`;

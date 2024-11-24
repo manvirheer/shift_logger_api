@@ -64,6 +64,9 @@ import {
 
     @Column()
     recordType: string = 'Shift_End_Entry';
+
+    @Column({ type: 'varchar', nullable: true })
+    entryPeriod: string;
   
     // Shift Start Reading
     @Column({ type: 'float' })
@@ -84,6 +87,9 @@ import {
     // Additional details
     @Column({ nullable: true })
     details: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    entryDate: string;
   
     @BeforeInsert()
     @BeforeUpdate()

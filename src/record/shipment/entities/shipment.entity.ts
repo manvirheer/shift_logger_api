@@ -73,4 +73,10 @@ export class Shipment {
     // Additional remarks
     @Column({ nullable: true })
     remarks: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    entryPeriod: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    entryDate: string;
 }

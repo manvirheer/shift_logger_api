@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SteamParameters } from './entities/steam-parameters.entity';
@@ -7,6 +7,7 @@ import { UpdateSteamParametersDto } from './dtos/update-steam-parameters.dto';
 import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
 import { ShiftSchedule } from '../../shift/shift-schedule/entities/shift-schedule.entity';
+import { DataEntryPeriodService } from 'src/data-entry-period/data-entry-period.service';
 
 @Injectable()
 export class SteamParametersService {
@@ -19,6 +20,7 @@ export class SteamParametersService {
     private readonly plantRepo: Repository<Plant>,
     @InjectRepository(ShiftSchedule)
     private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
+    private readonly dataEntryPeriodService: DataEntryPeriodService,
   ) {}
 
   async create(
@@ -46,7 +48,69 @@ export class SteamParametersService {
       shiftSchedule,
     });
 
+
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(plant.plantId, new Date());
+
+    steamParameters.entryPeriod = entryPeriod;
+    steamParameters.entryDate = entryDate;
     return this.steamParametersRepo.save(steamParameters);
+  }
+
+  async createSteamParametersForShift(
+    plantId: string,
+    shiftScheduleId: string,
+    userId: string,
+  ): Promise<SteamParameters[]> {
+    // Retrieve ShiftSchedule
+    const shiftSchedule = await this.shiftScheduleRepo.findOne({
+      where: { id: shiftScheduleId },
+    });
+    if (!shiftSchedule)
+      throw new NotFoundException('Shift Schedule not found');
+
+    // Determine start hour based on shiftTitle
+    let startHour: number;
+    let entryPeriod: string;
+
+    switch (shiftSchedule.shiftTitle) {
+      case 'A':
+        startHour = 7;
+        entryPeriod = 'A';
+        break;
+      case 'B':
+        startHour = 15;
+        entryPeriod = 'B';
+        break;
+      case 'C':
+        startHour = 23;
+        entryPeriod = 'C';
+        break;
+      default:
+        throw new BadRequestException('Invalid Shift Title');
+    }
+
+
+
+    const createdEntries: SteamParameters[] = [];
+
+    for (let i = 0; i < 8; i++) {
+      // Calculate new hour with wrap-around using modulo 24
+      const currentHour = (startHour + i) % 24;
+      const timeStart = `${String(currentHour).padStart(2, '0')}:00:00`;
+
+      // Prepare CreateSteamParametersDto
+      const createDto: CreateSteamParametersDto = {
+        plantId,
+        shiftScheduleId,
+        timeStart,
+      };
+
+      // Create and save the SteamParameters entry using existing create method
+      const createdEntry = await this.create(createDto, userId);
+      createdEntries.push(createdEntry);
+    }
+
+    return createdEntries;
   }
 
   async findAll(params: any): Promise<SteamParameters[]> {
@@ -77,6 +141,26 @@ export class SteamParametersService {
     return record;
   }
 
+  async findByDate(date: string): Promise<SteamParameters[]> {
+
+    const steamParameters = await this.steamParametersRepo.find({
+    
+      relations: ['shiftSchedule'],
+      order: {
+        shiftSchedule: {
+          shiftTitle: 'ASC',
+        },
+        timeStart: 'ASC',
+      },
+    });
+
+    if (!steamParameters || steamParameters.length === 0) {
+      throw new NotFoundException(`No Steam Parameters found for date ${date}`);
+    }
+
+    return steamParameters;
+  }
+
   async update(
     id: string,
     data: UpdateSteamParametersDto,
@@ -85,36 +169,38 @@ export class SteamParametersService {
     const steamParameters = await this.steamParametersRepo.findOne({
       where: { id },
     });
-    if (!steamParameters)
-      throw new NotFoundException(
-        `Steam Parameters record with ID ${id} not found`,
-      );
-
-    if (data.plantId) {
-      const plant = await this.plantRepo.findOne({
-        where: { plantId: data.plantId },
-      });
-      if (!plant) throw new NotFoundException('Plant not found');
-      steamParameters.plant = plant;
-    }
-
-    if (data.shiftScheduleId) {
-      const shiftSchedule = await this.shiftScheduleRepo.findOne({
-        where: { id: data.shiftScheduleId },
-      });
-      if (!shiftSchedule)
-        throw new NotFoundException('Shift Schedule not found');
-      steamParameters.shiftSchedule = shiftSchedule;
-    }
-
+    
     Object.assign(steamParameters, data);
 
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(steamParameters.plant.plantId, new Date());
+    steamParameters.entryPeriod = entryPeriod;
+    steamParameters.entryDate = entryDate;
     steamParameters.updatedBy = user;
 
     return this.steamParametersRepo.save(steamParameters);
   }
+
+  async bulkUpdate(
+    updates: UpdateSteamParametersDto[],
+    userId: string,
+  ): Promise<void> {
+    await this.steamParametersRepo.manager.transaction(async (manager) => {
+      for (const updateDto of updates) {
+        const { id, ...data } = updateDto;
+        const result = await manager.update(SteamParameters, id, {
+          ...data,
+          updatedBy: { id: userId },
+        });
+        if (result.affected === 0) {
+          throw new NotFoundException(`Steam Parameter with ID ${id} not found`);
+        }
+      }
+    });
+  }
+  
 
   async remove(id: string): Promise<void> {
     const result = await this.steamParametersRepo.delete(id);

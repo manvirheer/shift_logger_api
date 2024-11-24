@@ -20,15 +20,14 @@ export class PlantService {
     return this.plantRepo.save(plant);
   }
 
-  async findAllPlants(): Promise<Plant[]> {
-    // Find all plants and return only the id and name without any relations
-    return this.plantRepo.find({ select: ['plantId', 'plantName'] });
+  async findAllPlants(relations: string[] = []): Promise<Plant[]> {
+    return this.plantRepo.find({ relations });
   }
 
-  async findPlantById(plantId: string): Promise<Plant> {
+  async findPlantById(plantId: string, relations: string[] = []): Promise<Plant> {
     const plant = await this.plantRepo.findOne({
       where: { plantId },
-      relations: ['users'],
+      relations,
     });
     if (!plant) {
       throw new NotFoundException('Plant not found');
@@ -43,8 +42,13 @@ export class PlantService {
   }
 
   async removePlant(plantId: string): Promise<void> {
-    const plant = await this.findPlantById(plantId);
-    await this.plantRepo.remove(plant);
+    // Remove all users from the plant to remove foreign key constraint
+    await this.removeAllUsersFromPlant(plantId);
+
+    const result = await this.plantRepo.delete(plantId);
+    if (result.affected === 0) {
+      throw new NotFoundException('Plant not found');
+    }
   }
 
   // Get the plant id from staff id by checking the user_plants tables
@@ -63,19 +67,17 @@ export class PlantService {
     return user.plants[0].plantId;
   }
 
-
   async addUsersToPlant(
     plantId: string,
     userIds: string[],
   ): Promise<Plant> {
-    const plant = await this.findPlantById(plantId);
+    const plant = await this.findPlantById(plantId, ['users']);
 
     // Find users by IDs using find by and in
     const usersToAdd = await this.userRepo.findBy({ id: In(userIds) });
     if (usersToAdd.length !== userIds.length) {
       throw new NotFoundException('One or more users not found');
     }
-  
     // Get IDs of users already associated with the plant
     const existingUserIds = new Set(plant.users.map(user => user.id));
   

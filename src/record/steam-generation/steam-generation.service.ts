@@ -7,6 +7,7 @@ import { UpdateSteamGenerationDto } from './dtos/update-steam-generation.dto';
 import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
 import { ShiftSchedule } from '../../shift/shift-schedule/entities/shift-schedule.entity';
+import { DataEntryPeriodService } from 'src/data-entry-period/data-entry-period.service';
 
 @Injectable()
 export class SteamGenerationService {
@@ -19,6 +20,7 @@ export class SteamGenerationService {
     private readonly plantRepo: Repository<Plant>,
     @InjectRepository(ShiftSchedule)
     private readonly shiftScheduleRepo: Repository<ShiftSchedule>, // Inject ShiftSchedule repository
+    private readonly dataEntryPeriodService: DataEntryPeriodService,
   ) { }
 
   async create(
@@ -50,6 +52,10 @@ export class SteamGenerationService {
       shiftSchedule: shiftSchedule,
       updatedBy: null,
     });
+
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(plant.plantId, new Date());
+    record.entryPeriod = entryPeriod;
+    record.entryDate = entryDate;
 
     return this.steamGenRepo.save(record);
   }
@@ -123,6 +129,10 @@ export class SteamGenerationService {
       throw new NotFoundException('User not found');
     }
     steamGenRecord.updatedBy = user;
+
+    const {entryPeriod, entryDate} = await this.dataEntryPeriodService.findPeriodForTime(steamGenRecord.plant.plantId, new Date());
+    steamGenRecord.entryPeriod = entryPeriod;
+    steamGenRecord.entryDate = entryDate;
 
     await this.steamGenRepo.save(steamGenRecord);
     return steamGenRecord;

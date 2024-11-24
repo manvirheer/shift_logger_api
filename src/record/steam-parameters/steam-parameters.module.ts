@@ -5,10 +5,11 @@ import { SteamParametersController } from './steam-parameters.controller';
 import { SteamParameters } from './entities/steam-parameters.entity';
 import { User } from '../../user/entities/user.entity';
 import { Plant } from '../../plant/entities/plant.entity';
-import { ShiftSchedule } from '../../shift/shift-schedule/entities/shift-schedule.entity';
 import { UserModule } from '../../user/user.module';
 import { PlantModule } from '../../plant/plant.module';
-import { ShiftScheduleModule } from '../../shift/shift-schedule/shift-schedule.module';
+import { ShiftSchedule } from 'src/shift/shift-schedule/entities/shift-schedule.entity';
+import { DataEntryPeriod } from 'src/data-entry-period/entities/data-entry-period.entity';
+import { DataEntryPeriodModule } from 'src/data-entry-period/data-entry-period.module';
 
 @Module({
   imports: [
@@ -16,11 +17,11 @@ import { ShiftScheduleModule } from '../../shift/shift-schedule/shift-schedule.m
       SteamParameters,
       User,
       Plant,
-      ShiftSchedule,
+      ShiftSchedule
     ]),
     UserModule,
     PlantModule,
-    ShiftScheduleModule,
+    DataEntryPeriodModule,
   ],
   controllers: [SteamParametersController],
   providers: [SteamParametersService],

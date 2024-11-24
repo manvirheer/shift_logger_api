@@ -59,6 +59,12 @@ export class SteamGenerationRecord {
   @Column({ nullable: true })
   remarks: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  entryPeriod: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  entryDate: string;
+
   @BeforeInsert()
   @BeforeUpdate()
   calculateSteamGeneration() {
