@@ -70,7 +70,7 @@ export class StaffController {
 
   // Delete a staff
   @UseGuards(AuthGuard('jwt'))
-  @Delete(':id')
+  @Delete(':id') 
   async deleteStaff(@Param('id') id: string, @Request() req) {
     if (req.user.id !== id && req.user.role !== UserRole.ADMIN) {
       throw new ForbiddenException('You can only delete your own profile');

@@ -39,6 +39,20 @@ export class InventoryService {
     const shiftSchedule = await this.shiftScheduleRepo.findOne({ where: { id: data.shiftScheduleId } });
     if (!shiftSchedule) throw new NotFoundException('Shift Schedule not found');
 
+    // If initialValue is not provided, fetch the last inventory record
+    if (data.initialValue === undefined || data.initialValue === null) {
+      const lastInventoryRecord = await this.inventoryRepo.findOne({
+        where: { plant: { plantId: data.plantId } },
+        order: { createdAt: 'DESC' },
+      });
+
+      if (lastInventoryRecord) {
+        data.initialValue = lastInventoryRecord.finalValue;
+      } else {
+        data.initialValue = 0; // If no previous record exists, start from 0
+      }
+    }
+
     const inventory = this.inventoryRepo.create({
       ...data,
       createdBy: user,
@@ -47,11 +61,13 @@ export class InventoryService {
       updatedBy: null,
     });
 
+    // Compute entryPeriod and entryDate
     const { entryPeriod, entryDate } = await this.dataEntryPeriodService.findPeriodForTime(plant.plantId, new Date());
     inventory.entryPeriod = entryPeriod;
     inventory.entryDate = entryDate;
 
     return this.inventoryRepo.save(inventory);
+
   }
 
   async findAll(params: InventoryQueryParams): Promise<InventoryRecord[]> {

@@ -12,6 +12,7 @@ import { Plant } from 'src/plant/entities/plant.entity';
 import { InventoryService } from 'src/record/inventory/inventory.service';
 import { ShiftEndEntry } from './entities/shift-end-entry.entity';
 import { DataEntryPeriodService } from 'src/data-entry-period/data-entry-period.service';
+import { UpdateShiftEndEntryDto } from './dtos/update-shift-end-entry.dto';
 
 @Injectable()
 export class ShiftEndService {
@@ -67,22 +68,15 @@ export class ShiftEndService {
     const steamGenerationRecord =
       await this.steamGenService.create(steamGenData, userId);
 
-    // Get the last record of the inventory
-    const lastInventoryRecord = await this.inventoryRepo.findOne({
-      where: { plant: { plantId: data.plantId } },
-      order: { recordDate: 'DESC', recordTime: 'DESC' },
-    });
-
     // Update Inventory Record
     const inventoryData = {
       shiftScheduleId: data.shiftScheduleId,
       plantId: data.plantId,
-      recordDate: format(new Date(), 'yyyy-MM-dd'),
+      recordDate: format(new Date(), 'PP'),
       recordTime: format(new Date(), 'HH:mm:ss'),
       consumption: data.briquetteConsumption,
       addition: 0,
       details: 'Shift End Entry',
-      initialValue: lastInventoryRecord ? lastInventoryRecord.finalValue : 0,
     };
 
     const inventoryRecord = await this.inventoryService.create(
@@ -150,4 +144,101 @@ export class ShiftEndService {
       throw error;
     }
   }
+
+  async update(data: UpdateShiftEndEntryDto, userId: string) {
+    const shiftEndEntry = await this.shiftEndEntryRepo.findOne({
+      where: { id: data.id },
+      relations: [
+        'shiftSchedule',
+        'user',
+        'plant',
+        'steamGenerationRecord',
+        'inventoryRecord',
+        'ash'
+      ],
+    });
+  
+    if (!shiftEndEntry) {
+      throw new NotFoundException(`ShiftEndEntry with ID ${data.id} not found`);
+    }
+  
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+  
+    let { shiftSchedule, plant } = shiftEndEntry;
+  
+    // Update shiftSchedule if changed
+    if (data.shiftScheduleId && data.shiftScheduleId !== shiftEndEntry.shiftSchedule.id) {
+      const newShiftSchedule = await this.shiftScheduleRepo.findOne({ where: { id: data.shiftScheduleId } });
+      if (!newShiftSchedule) throw new NotFoundException('Shift Schedule not found');
+      shiftSchedule = newShiftSchedule;
+    }
+  
+    // Update plant if changed
+    if (data.plantId && data.plantId !== shiftEndEntry.plant.plantId) {
+      const newPlant = await this.plantRepo.findOne({ where: { plantId: data.plantId } });
+      if (!newPlant) throw new NotFoundException('Plant not found');
+      plant = newPlant;
+    }
+  
+    const { entryPeriod, entryDate } = await this.dataEntryPeriodService.findPeriodForTime(
+      plant.plantId,
+      new Date()
+    );
+  
+    let steamGenRecord = shiftEndEntry.steamGenerationRecord;
+    let inventoryRecord = shiftEndEntry.inventoryRecord;
+    let ash = shiftEndEntry.ash;
+  
+    // If steam generation readings or remarks updated, update steamGenerationRecord
+    if (
+      data.steamGenerationFinalReading !== undefined ||
+      data.steamGenerationInitialReading !== undefined ||
+      data.remarks !== undefined
+    ) {
+      const steamGenUpdateData = {
+        initialReading: data.steamGenerationInitialReading ?? steamGenRecord.initialReading,
+        finalReading: data.steamGenerationFinalReading ?? steamGenRecord.finalReading,
+        remarks: data.remarks ?? steamGenRecord.remarks,
+      };
+      steamGenRecord = await this.steamGenService.update(steamGenRecord.id, steamGenUpdateData, userId);
+    }
+  
+    // If briquetteConsumption changed, update inventoryRecord
+    if (data.briquetteConsumption !== undefined) {
+      const invUpdateData = {
+        consumption: data.briquetteConsumption,
+        // Keep other fields as they are if not changed
+        addition: inventoryRecord.addition,
+        details: inventoryRecord.details,
+      };
+      inventoryRecord = await this.inventoryService.update(inventoryRecord.id, invUpdateData, userId);
+    }
+  
+    // If ashGenerated changed, update ash record
+    if (data.ashGenerated !== undefined) {
+      const ashUpdateData = {
+        ashGenerated: data.ashGenerated,
+      };
+      ash = await this.ashService.update(ash.id, ashUpdateData, userId);
+    }
+  
+    const remarks = data.remarks ?? shiftEndEntry.remarks;
+  
+    // Update the main shiftEndEntry record
+    shiftEndEntry.shiftSchedule = shiftSchedule;
+    shiftEndEntry.user = user;
+    shiftEndEntry.plant = plant;
+    shiftEndEntry.steamGenerationRecord = steamGenRecord;
+    shiftEndEntry.inventoryRecord = inventoryRecord;
+    shiftEndEntry.ash = ash;
+    shiftEndEntry.remarks = remarks;
+    shiftEndEntry.entryDate = entryDate;
+    shiftEndEntry.entryPeriod = entryPeriod;
+  
+    await this.shiftEndEntryRepo.save(shiftEndEntry);
+  
+    return { message: 'Shift end entry updated successfully', shiftEndEntry };
+  }
+  
 }

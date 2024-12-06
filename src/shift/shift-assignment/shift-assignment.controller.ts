@@ -43,6 +43,11 @@ export class ShiftAssignmentController {
     return this.shiftAssignmentService.getShiftAssignmentsByUserId(userId);
   }
 
+  @Get('current/:plantId')
+  async getCurrentShiftAssignments(@Param('plantId') plantId: string) {
+    return await this.shiftAssignmentService.getCurrentShiftAssignments(plantId);
+  }
+
   @Patch(':id')
   async updateShiftAssignment(
     @Param('id') id: string,

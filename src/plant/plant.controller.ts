@@ -25,7 +25,7 @@ import { UserRole } from '../user/entities/user.entity';
 export class PlantController {
   constructor(private readonly plantService: PlantService) {}
 
-  @Roles(UserRole.ADMIN)
+   @Roles(UserRole.ADMIN)
   @Post()
   async createPlant(@Body() createPlantDto: CreatePlantDto) {
     const plant = await this.plantService.createPlant(createPlantDto);

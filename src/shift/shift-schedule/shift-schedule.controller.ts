@@ -38,21 +38,6 @@ export class ShiftScheduleController {
     return await this.shiftScheduleService.assignShiftToUser(userId, shiftTemplateId);
   }
 
-  @Get()
-  async getAllShiftSchedules(
-    @Query('startTime') startTime?: string,
-    @Query('endTime') endTime?: string,
-    @Query('plantId') plantId?: string,
-    @Query('shiftTitle') shiftTitle?: string,
-  ) {
-    return await this.shiftScheduleService.getAllShiftSchedules(
-      startTime,
-      endTime,
-      plantId,
-      shiftTitle,
-    );
-  }
-
   @Get('staff-login')
   async getStaffLoginShiftSchedule(@Request() req) {
     const userId = req.user.id;
@@ -73,6 +58,21 @@ export class ShiftScheduleController {
       return { message: 'No current shift schedule found' };
     }
     return shiftSchedule;
+  }
+
+  @Get()
+  async getAllShiftSchedules(
+    @Query('startTime') startTime?: string,
+    @Query('endTime') endTime?: string,
+    @Query('plantId') plantId?: string,
+    @Query('shiftTitle') shiftTitle?: string,
+  ) {
+    return await this.shiftScheduleService.getAllShiftSchedules(
+      startTime,
+      endTime,
+      plantId,
+      shiftTitle,
+    );
   }
 
   @Patch(':id')

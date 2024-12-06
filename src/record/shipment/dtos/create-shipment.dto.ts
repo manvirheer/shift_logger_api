@@ -15,10 +15,6 @@ export class CreateShipmentDto {
 
     @IsString()
     @IsNotEmpty()
-    recordDate: string;
-
-    @IsString()
-    @IsNotEmpty()
     recordTime: string;
 
     @IsNumber()

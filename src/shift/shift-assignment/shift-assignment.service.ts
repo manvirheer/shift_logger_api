@@ -3,6 +3,7 @@ import {
     NotFoundException,
     BadRequestException,
     ForbiddenException,
+    InternalServerErrorException,
   } from '@nestjs/common';
   import { InjectRepository } from '@nestjs/typeorm';
   import { Repository, In, LessThanOrEqual, MoreThanOrEqual, LessThan, MoreThan } from 'typeorm';
@@ -16,6 +17,8 @@ import {
   // DTOs
   import { CreateShiftAssignmentDto } from './dtos/create-shift-assignment.dto';
   import { UpdateShiftAssignmentDto } from './dtos/update-shift-assignment.dto';
+import * as moment from 'moment';
+import { Plant } from 'src/plant/entities/plant.entity';
   
   @Injectable()
   export class ShiftAssignmentService {
@@ -26,6 +29,8 @@ import {
       private readonly shiftScheduleRepo: Repository<ShiftSchedule>,
       @InjectRepository(User)
       private readonly userRepo: Repository<User>,
+      @InjectRepository(Plant)
+      private readonly plantRepo: Repository<Plant>,
     ) {}
   
     async createShiftAssignment(
@@ -121,6 +126,45 @@ import {
       });
     }
   
+    async getCurrentShiftAssignments(
+      plantId: string,
+    ): Promise<ShiftAssignment[]> {
+      try {
+  
+        // Ensure the plant exists
+        const plant = await this.plantRepo.findOne({ where: { plantId } });
+        if (!plant) {
+          throw new NotFoundException(`Plant with ID ${plantId} not found`);
+        }
+  
+        // Get the current time using moment for consistency
+        const currentTime = moment().toDate();
+  
+        // Define the statuses that qualify a shift as active
+        const activeStatuses = [ShiftStatus.PLANNED, ShiftStatus.ATTENDED];
+        // Use QueryBuilder to query ShiftSchedule with joins and conditions
+         // Use QueryBuilder to query ShiftAssignment with joins and conditions
+         const activeShiftSchedules = await this.shiftAssignmentRepo
+         .createQueryBuilder('shiftAssignment')
+         // have the entire shiftAssignment relation
+          .leftJoinAndSelect('shiftAssignment.user', 'user')
+          // join plant through shift schedule
+          .innerJoinAndSelect('shiftAssignment.shiftSchedule', 'shiftSchedule')
+          .leftJoinAndSelect('shiftSchedule.plant', 'plant')
+         .andWhere('shiftSchedule.status IN (\'Planned\', \'Attended\')', { activeStatuses })
+         .andWhere('shiftSchedule.startTime <= :currentTime', { currentTime })
+         .andWhere('shiftSchedule.endTime >= :currentTime', { currentTime })
+         .getMany();
+  
+  
+        return activeShiftSchedules;
+      } catch (error) {
+        throw new InternalServerErrorException(
+          'Failed to retrieve current shift schedules for the plant.',
+        );
+      }
+    }
+    
     async updateShiftAssignment(
       id: string,
       data: UpdateShiftAssignmentDto,

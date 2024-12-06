@@ -238,6 +238,9 @@ export class ShiftScheduleService {
        // Use QueryBuilder to query ShiftAssignment with joins and conditions
        const activeShiftSchedules = await this.shiftAssignmentRepo
        .createQueryBuilder('shiftAssignment')
+       // have the entire shiftAssignment relation
+        .leftJoinAndSelect('shiftAssignment.user', 'user')
+       // have the shiftSchedule relation
        .innerJoinAndSelect('shiftAssignment.shiftSchedule', 'shiftSchedule')
        .andWhere('shiftSchedule.status IN (\'Planned\', \'Attended\')', { activeStatuses })
        .andWhere('shiftSchedule.startTime <= :currentTime', { currentTime })

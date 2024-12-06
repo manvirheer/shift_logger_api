@@ -8,13 +8,13 @@ import { User } from '../entities/user.entity';
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private userService: UserService) {
-    super({ usernameField: 'email' });
+    super({ usernameField: 'username' }); 
   }
 
-  async validate(email: string, password: string): Promise<User> {
-    const user = await this.userService.validateUser(email, password);
+  async validate(username: string, password: string): Promise<User> {
+    const user = await this.userService.validateUser(username, password);
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid username or password');
     }
     return user;
   }

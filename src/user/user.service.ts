@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
@@ -21,11 +21,36 @@ export class UserService {
     @InjectRepository(Staff)
     private readonly staffRepo: Repository<Staff>,
     private readonly dataSource: DataSource,
-  ) {}
+  ) {
+
+    // update the all the users with staff role to have username be "staff-name"
+    
+  }
+
+   // Additional methods for authentication
+   async findByUsername(username: string): Promise<User | undefined> {
+    return this.userRepo.findOne({
+      where: { username },
+    });
+  }
+
+  async validateUser(username: string, password: string): Promise<User | null> {
+    const user = await this.findByUsername(username);
+    if (user && (await bcrypt.compare(password, user.password))) {
+      return user;
+    }
+    return null;
+  }
 
   // Create a new admin user within a transaction
   async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
     return this.dataSource.transaction(async (manager) => {
+      // Check if username already exists
+      const existingUser = await this.findByUsername(createAdminDto.username);
+      if (existingUser) {
+        throw new ConflictException('Username already exists');
+      }
+
       const user = this.userRepo.create({
         ...createAdminDto,
         role: UserRole.ADMIN,
@@ -47,6 +72,12 @@ export class UserService {
   // Create a new staff user within a transaction
   async createStaff(createStaffDto: CreateStaffDto): Promise<User> {
     return this.dataSource.transaction(async (manager) => {
+      // Check if username already exists
+      const existingUser = await this.findByUsername(createStaffDto.username);
+      if (existingUser) {
+        throw new ConflictException('Username already exists');
+      }
+
       const user = this.userRepo.create({
         ...createStaffDto,
         role: UserRole.STAFF,
@@ -178,14 +209,6 @@ export class UserService {
     return this.userRepo.findOne({
       where: { email },
     });
-  }
-
-  async validateUser(email: string, password: string): Promise<User | null> {
-    const user = await this.findByEmail(email);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return user;
-    }
-    return null;
   }
 
   async findById(id: string): Promise<User | undefined> {

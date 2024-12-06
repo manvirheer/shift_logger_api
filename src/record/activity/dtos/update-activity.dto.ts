@@ -9,7 +9,7 @@ export class UpdateActivityDto {
   @IsOptional()
   @IsString()
   shiftId?: string; 
-
+  
   @IsOptional()
   @IsString()
   activityDetails?: string;

@@ -32,7 +32,6 @@ export class ShipmentController {
         @Query('plantId') plantId?: string,
         @Query('createdById') createdById?: string,
         @Query('vehicleNo') vehicleNo?: string,
-        @Query('recordDate') recordDate?: string,
         @Query('recordTime') recordTime?: string,
     ) {
         return this.shipmentService.findAll({
@@ -40,7 +39,6 @@ export class ShipmentController {
             plantId,
             createdById,
             vehicleNo,
-            recordDate,
             recordTime,
         });
     }

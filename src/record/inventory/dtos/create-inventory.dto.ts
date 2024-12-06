@@ -21,8 +21,8 @@ export class CreateInventoryRecordDto {
   recordType?: string;
 
   @IsNumber()
-  @IsNotEmpty()
-  initialValue: number;
+  @IsOptional()
+  initialValue?: number;
 
   @IsNumber()
   @IsOptional()

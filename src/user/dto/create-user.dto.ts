@@ -1,8 +1,13 @@
-import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
 
 // DTO for creating a user
 export class CreateUserDto {
+  @IsString()
+  @MinLength(4)
+  username: string;
+  
   @IsEmail()
+  @IsOptional()
   email: string;
 
   @IsString()

@@ -39,10 +39,6 @@ export class Shipment {
     @CreateDateColumn()
     createdAt: Date;
 
-    // Record the date of the shipment
-    @Column()
-    recordDate: string;
-
     @Column()
     recordTime: string;
 

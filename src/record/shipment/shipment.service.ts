@@ -17,7 +17,6 @@ interface ShipmentQueryParams {
   plantId?: string;
   createdById?: string;
   vehicleNo?: string;
-  recordDate?: string;
   recordTime?: string;
 }
 
@@ -79,7 +78,6 @@ export class ShipmentService {
       ...(params.plantId && { plant: { plantId: params.plantId } }),
       ...(params.createdById && { createdBy: { id: params.createdById } }),
       ...(params.vehicleNo && { vehicleNo: params.vehicleNo }),
-      ...(params.recordDate && { recordDate: params.recordDate }),
       ...(params.recordTime && { recordTime: params.recordTime }),
     };
 
@@ -192,7 +190,6 @@ export class ShipmentService {
       entryPeriod,
       entryDate,
       shiftSchedule: shipment.shiftSchedule,
-      recordDate: shipment.recordDate,
       recordTime: shipment.recordTime,
       initialValue: newInitialValue,
       recordType: 'Shipment_Entry',

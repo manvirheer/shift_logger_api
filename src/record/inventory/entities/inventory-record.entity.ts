@@ -55,10 +55,6 @@ import {
     @JoinColumn({ name: 'shift_schedule_id' })
     shiftSchedule: ShiftSchedule;
   
-    // Record Date and Time
-    @Column()
-    recordDate: string;
-  
     @Column()
     recordTime: string;
 

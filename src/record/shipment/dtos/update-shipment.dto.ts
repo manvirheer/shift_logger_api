@@ -23,10 +23,6 @@ export class UpdateShipmentDto {
 
     @IsString()
     @IsOptional()
-    recordDate: string;
-
-    @IsString()
-    @IsOptional()
     recordTime: string;
 
     @IsString()
