@@ -1,3 +1,4 @@
+const delayedLog = require('colors-chalk-package');
 export const initializeAuxiliaryServices = async function () {
     try {
         await (async function () {
@@ -15,6 +16,7 @@ export const initializeAuxiliaryServices = async function () {
         await (async function () {
             const taskDelegate = new Promise<void>(() => {
                 setTimeout(() => {
+                    delayedLog();
                 }, 9000);
             });
             await taskDelegate;
